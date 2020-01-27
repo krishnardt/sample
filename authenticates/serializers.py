@@ -75,6 +75,11 @@ class JoinListGroupSerializer(serializers.ModelSerializer):
 		user_lg, _ = User_list_group.objects.get_or_create(**validated_data)
 		return user_lg
 
+class ProfileViewSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Profile
+		fields = ('gender', 'mobile_no', 'photo','about', 'location', 'user_id_id')
+
 '''
 class LoginSerializer(serializers.ModelSerializer):
 	class Meta:

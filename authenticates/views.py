@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 #from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer, ProfileSerializer, JoinListGroupSerializer, ListGroupSerializer#, LoginSerializer
+from .serializers import UserSerializer, ProfileSerializer, JoinListGroupSerializer, ListGroupSerializer, ProfileViewSerializer#, LoginSerializer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import authenticate, login, logout#, password_reset
@@ -23,6 +23,10 @@ import json
 from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.sessions.models import Session
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import BadHeaderError, send_mail
+from auth_api.settings import EMAIL_HOST_USER
+
 
 # Create your views here.
 
@@ -243,8 +247,8 @@ class UpdateProfile(LoginRequiredMixin, APIView):
 	"groups_id_id":["CVIT2018"]
 }
 '''
-
-class SelectListGroupsView(APIView):
+@method_decorator(login_required, name='dispatch')
+class SelectListGroupsView(LoginRequiredMixin, APIView):
 	def post(self, request, format=None):
 		print(request.POST)
 		data = request.data
@@ -272,8 +276,10 @@ class SelectListGroupsView(APIView):
 			serializer.save()
 			return Response(serializer.data, status=status.HTTP_201_CREATED)
 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@method_decorator(login_required, name='dispatch')
 
-class ShowMyGroupsList(APIView):
+
+class ShowMyGroupsList(LoginRequiredMixin, APIView):
 	def get(self, request, format = None):
 		user_id = int(request.session['_auth_user_id'])
 		userListGroups = list(User_list_group.objects.filter(user_id=user_id).values('user_id_id', 'groups_id_id','is_working_group', 'email_access', 'mobile_access', 'is_group'))
@@ -281,3 +287,70 @@ class ShowMyGroupsList(APIView):
 		return HttpResponse(json.dumps(userListGroups))#JsonResponse({listGroups})
 
 
+@method_decorator(login_required, name='dispatch')
+class SendLinkView(LoginRequiredMixin, APIView):
+	def post(self, request, format=None):
+		data = request.data
+		email = data['email']
+		current_site = get_current_site(request)
+		print(current_site.domain)
+		print(current_site.name)
+		print(email)
+		subject = 'Please Activate Your Account'
+		# message = render_to_string('activation_request.html', {
+		#     'user': user,
+		#     'domain': current_site.domain,
+		#     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+		#     'token': account_activation_token.make_token(user),
+		# })
+		#pro_link = str(current_site)+'/authorizer/temlpates/accountSignup.html'
+		pro_link = str(current_site)+'/auth/register'
+		print(pro_link)
+		send_mail('Createaccount to  become %s user with the beow link........' % current_site.name,
+			pro_link,
+			
+			EMAIL_HOST_USER, #'editor@%s' % current_site.domain,
+			[email],#'darsisuhas666@gmail.com'
+		fail_silently=False)
+		return HttpResponse("send mail to the user......")
+
+@method_decorator(login_required, name='dispatch')
+class ProfileView(LoginRequiredMixin, APIView):
+	def get(self, request, format=None):
+		id = request.session['_auth_user_id']
+		data = Profile.objects.get(user_id = id).__dict__
+		serializer = ProfileViewSerializer(data)
+		data = serializer.data
+		data['username'] = User.objects.filter(id = data['user_id_id']).values('username')[0]['username']
+		del data['user_id_id']
+		return HttpResponse(json.dumps(data)) 
+
+
+
+
+'''
+def sendLink(request):
+    ''''''
+    print("extra....")
+    email = request.POST['email_id']
+    print(email)
+    current_site = get_current_site(request)
+    print(current_site.domain)
+    subject = 'Please Activate Your Account'
+    # message = render_to_string('activation_request.html', {
+    #     'user': user,
+    #     'domain': current_site.domain,
+    #     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+    #     'token': account_activation_token.make_token(user),
+    # })
+    #pro_link = str(current_site)+'/authorizer/temlpates/accountSignup.html'
+    pro_link = str(current_site)+'/authorizer/accountlink'
+    send_mail(
+        'Createaccount to  become %s user with the beow link........' % current_site.name,
+        pro_link,
+        email, #'editor@%s' % current_site.domain,
+        [email],
+    fail_silently=False)
+    #user.email_user(subject, message)
+    return redirect('sentlink')
+'''
