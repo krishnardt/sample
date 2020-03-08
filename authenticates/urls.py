@@ -34,6 +34,7 @@ urlpatterns = [
     path('myteams/', views.ShowMyGroupsList.as_view(), name='myteams'),
     path('signupmailer/',views.SendLinkView.as_view(), name='signupmailer'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('username/', views.GetUserNameView.as_view(), name='username'),
     #url(r'^api-token-auth/', obtain_jwt_token),
     #url(r'^login/', obtain_jwt_token),
     #path('password_reset/', view.PassordReset.as_view(), name = 'password_reset'),

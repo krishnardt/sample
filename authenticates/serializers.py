@@ -80,6 +80,11 @@ class ProfileViewSerializer(serializers.ModelSerializer):
 		model = Profile
 		fields = ('gender', 'mobile_no', 'photo','about', 'location', 'user_id_id')
 
+class UsernameViewSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = User
+		fields = ('username',)
+
 '''
 class LoginSerializer(serializers.ModelSerializer):
 	class Meta:

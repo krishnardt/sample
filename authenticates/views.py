@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 #from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer, ProfileSerializer, JoinListGroupSerializer, ListGroupSerializer, ProfileViewSerializer#, LoginSerializer
+from .serializers import UserSerializer, ProfileSerializer, JoinListGroupSerializer, ListGroupSerializer, ProfileViewSerializer, UsernameViewSerializer#, LoginSerializer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import authenticate, login, logout#, password_reset
@@ -26,6 +26,7 @@ from django.contrib.sessions.models import Session
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import BadHeaderError, send_mail
 from auth_api.settings import EMAIL_HOST_USER
+#from django.contrib.auth.decorators import permission_required
 
 
 # Create your views here.
@@ -100,7 +101,7 @@ class RegisterView(APIView):
 '''
 login of user
 data format is:
-{"username":"krishna", "password":"1234@qwer"}
+{"username":"krishna", "password":"12345"}
 
 '''
 class LoginView(APIView):
@@ -206,6 +207,7 @@ to update profile..
 data format:
 {"gender":"Female", "about":"sd ad asf "}
 '''
+#@permission_required('auth.change_user')
 @method_decorator(login_required, name='dispatch')
 class UpdateProfile(LoginRequiredMixin, APIView):
 	def post(self, request, format=None):
@@ -276,9 +278,10 @@ class SelectListGroupsView(LoginRequiredMixin, APIView):
 			serializer.save()
 			return Response(serializer.data, status=status.HTTP_201_CREATED)
 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 @method_decorator(login_required, name='dispatch')
-
-
 class ShowMyGroupsList(LoginRequiredMixin, APIView):
 	def get(self, request, format = None):
 		user_id = int(request.session['_auth_user_id'])
@@ -314,6 +317,8 @@ class SendLinkView(LoginRequiredMixin, APIView):
 		fail_silently=False)
 		return HttpResponse("send mail to the user......")
 
+
+#@permission_required('auth.view_user')
 @method_decorator(login_required, name='dispatch')
 class ProfileView(LoginRequiredMixin, APIView):
 	def get(self, request, format=None):
@@ -325,6 +330,18 @@ class ProfileView(LoginRequiredMixin, APIView):
 		del data['user_id_id']
 		return HttpResponse(json.dumps(data)) 
 
+
+
+
+@method_decorator(login_required, name='dispatch')
+class GetUserNameView(LoginRequiredMixin, APIView):
+	def get(self, request, format=None):
+		print(request.session['_auth_user_id'])
+		user_id = request.session['_auth_user_id']
+		data = User.objects.get(id = user_id)
+		serializer = UsernameViewSerializer(data)
+		data = serializer.data
+		return HttpResponse(json.dumps(data)) 
 
 
 
